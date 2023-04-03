@@ -1,0 +1,211 @@
+import board
+import neopixel_spi
+import time
+import busio
+import random
+
+#Board
+from clcd.I2C_Charactor_Liquid_Crystal_Display import LCD
+from clcd.I2C_Device import *
+
+#Segments
+from adafruit_ht16k33 import segments
+
+#Motor
+from bready.hardware_utils.PCA9685_Module import PCA9685_Module
+
+i2c = busio.I2C(board.SCL, board.SDA)
+CLCD = LCD(i2c)
+
+CLCD.clear()
+segment = segments.set(i2c, address=0x77)
+led = neopixel_spi.NeoPixel_SPI(board.SPI(), 16, pixel_order=neopixel_spi.GRB)
+
+dcm = PCA9685_Module(8)
+
+servo = PCA9685_Module(8)
+servo.Set_Mode(2, 'SERVO')
+
+dcm.Set_Frequency(50)
+
+dcm.Set_Mode(0, 'PWM')
+dcm.Set_Mode(1, 'PWM')
+
+pwm = [0 , 55, 105, 155 , 205, 255]
+
+servo.Set_Servo_Degree(2, 0)
+
+#돈넣기
+print('돈을 넣어주세요.')
+money = int(input())
+
+#넣은 돈 표시
+segment.fill(0)
+segment.print(money)
+
+#메뉴설정
+drink = {'Coke':1500, 'Sprite':1200, 'Dr.Pep':1100, 'MtDew': 1000}
+
+#서보모터 움직임 설정
+def ServoMotor(quantity):
+    for i in range(quantity):
+        
+        #print("모터 돌아간다ㅏㅏㅏ")
+        for i in range(0, 150, 10):
+            if i >= 75:
+                #print('역방향')
+                dcm.Set_PWM_Output(0,0)
+                dcm.Set_PWM_Output(1,255)
+            if i < 75:
+                #print('정방향')
+                dcm.Set_PWM_Output(1,0)
+                dcm.Set_PWM_Output(0,255)
+            servo.Set_Servo_Degree(2, i)
+            time.sleep(0.1)
+        for i in range(150, 0, -10):
+            if i >= 75:
+                #print('역방향')
+                dcm.Set_PWM_Output(0,0)
+                dcm.Set_PWM_Output(1,255)
+            if i < 75:
+                #print('정방향')
+                dcm.Set_PWM_Output(1,0)
+                dcm.Set_PWM_Output(0,255)
+            servo.Set_Servo_Degree(2, i)
+            time.sleep(0.1)
+    dcm.Set_PWM_Output(1,0)
+    dcm.Set_PWM_Output(0,0)
+
+#LCD메뉴
+menuLCD = 0
+def LCDpan():
+    global menuLCD
+    if menuLCD == 0:
+        CLCD.clear()
+        CLCD.setCursor(0,0)
+        CLCD.display_string('1, Coke, 1500')
+        CLCD.setCursor(1,0)
+        CLCD.display_string('Page<Next><Prev>')
+    elif menuLCD == 1:
+        CLCD.clear()
+        CLCD.setCursor(0,0)
+        CLCD.display_string('2, Sprite, 1200')
+        CLCD.setCursor(1,0)
+        CLCD.display_string('Page<Next><Prev>')
+    elif menuLCD == 2:
+        CLCD.clear()
+        CLCD.setCursor(0,0)
+        CLCD.display_string('3, Dr.Pep, 1100')
+        CLCD.setCursor(1,0)
+        CLCD.display_string('Page<Next><Prev>')
+    elif menuLCD == 3:
+        CLCD.clear()
+        CLCD.setCursor(0,0)
+        CLCD.display_string('4, MtDew, 1000')
+        CLCD.setCursor(1,0)
+        CLCD.display_string('5,6=Next,Prev')
+
+#가격이 맞는지 확인
+def choice(number):
+    global menuLCD
+    if number == 1:
+        print("콜라 선택함")
+        if money >= drink['Coke']:
+            print("몇 개를 선택하시겠습니까?")
+            quantity = int(input())
+            if quantity > 0:
+                print(f'{quantity}개의 콜라가 나왔습니다.')
+                exchange = drink["Coke"] * quantity
+                
+                #서보모터돌리기
+                ServoMotor(quantity)
+            else:
+                print('올바른 개수를 입력하세요.')
+        else:
+            print('금액을 확인하세요')
+    elif number == 2:
+        print("스프라이트 선택함")
+        if money >= drink['Sprite']:
+            print("몇 개를 선택하시겠습니까?")
+            quantity = int(input())
+            if quantity > 0:
+                print(f'{quantity}개의 스프라이트가 나왔습니다.')
+                exchange = drink["Sprite"] * quantity
+                
+                #서보모터돌리기
+                ServoMotor(quantity)
+            else:
+                print('올바른 개수를 입력하세요.')
+        else:
+            print('금액을 확인하세요')
+    elif number == 3:
+        print("닥터페퍼 선택함")
+        if money >= drink['Dr.Pep']:
+            print("몇 개를 선택하시겠습니까?")
+            quantity = int(input())
+            if quantity > 0:
+                print(f'{quantity}개의 닥터페퍼가 나왔습니다.')
+                exchange = drink["Dr.Pep"] * quantity
+                
+                #서보모터돌리기
+                ServoMotor(quantity)
+            else:
+                print('올바른 개수를 입력하세요.')
+        else:
+            print('금액을 확인하세요')
+    elif number == 4:
+        print("마운틴듀 선택함")
+        if money >= drink['MtDew']:
+            print("몇 개를 선택하시겠습니까?")
+            quantity = int(input())
+            if quantity > 0:
+                print(f'{quantity}개의 마운틴듀가 나왔습니다.')
+                exchange = drink["MtDew"] * quantity
+                
+                #서보모터돌리기
+                ServoMotor(quantity)
+            else:
+                print('올바른 개수를 입력하세요.')
+        else:
+            print('금액을 확인하세요')
+            
+    elif number == 5:
+        print('다음 메뉴')
+        menuLCD += 1
+        if menuLCD >= 3:
+            menuLCD == 3
+        LCDpan()
+        return choice(int(input())) # 다시 choice 함수 실행
+        
+    elif number == 6:
+        print('이전 메뉴')
+        menuLCD -= 1
+        if menuLCD <= 0:
+            menuLCD == 0
+        LCDpan()
+        return choice(int(input())) # 다시 choice 함수 실행
+        
+    else:
+        print('번호를 잘못 입력하였습니다.')
+        
+    if exchange > 0:
+        change = money - exchange
+        print("거스름돈 %d원을 받으세요."%change)
+        segment.fill(0)
+        segment.print(change)
+
+#메뉴, 가격표시
+CLCD.clear()
+
+CLCD.setCursor(0,0)
+CLCD.display_string('1, Coke, 1500')
+CLCD.setCursor(1,0)
+CLCD.display_string('5,6=Next,Prev')
+
+
+
+#자판기 함수 choice실행
+print('음료를 선택하세요.')
+print('5번을 눌러 다음 메뉴를, 6번을 눌러 이전 메뉴를 표시합니다.')
+number = int(input())
+choice((number))
